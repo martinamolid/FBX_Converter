@@ -70,8 +70,9 @@ string PrintPolygons(FbxMesh* pMesh)
 
 	int polySize = 3; // MM: There's no way to get the poly size for every poly, as each and every has their own size. Assuming it is triangulated, we'll hardcode this for now
 
-	// MM This entire parent name part is a train wreck, needs more testing with a FBX with actual hierarchies
-	/*if (pMesh->GetDstObject() != NULL) {
+	//FbxMesh* parent = pMesh->GetDstObject();
+	//MM This entire parent name part is a train wreck, needs more testing with a FBX with actual hierarchies
+	/*if (parent != NULL) {
 		string parentName = (char*)pMesh->GetDstObject()->GetName();
 		if (parentName != "") {
 			pString += "Parent Name: " + parentName + "\n";
@@ -79,8 +80,8 @@ string PrintPolygons(FbxMesh* pMesh)
 	}*/
 
 
-	pString += "Poly Count: " + to_string(lPolygonCount) + "\n";
-	pString += "Vtx Count: " + to_string(lPolygonCount*polySize) + "\n";
+	pString += "pc " + to_string(lPolygonCount) + "\n";
+	//pString += "Vtx Count: " + to_string(lPolygonCount*polySize) + "\n";
 
 	int vertexId = 0;
 	for (i = 0; i < lPolygonCount; i++)
@@ -250,7 +251,7 @@ string PrintPolygons(FbxMesh* pMesh)
 			for (l = 0; l < pMesh->GetElementTangentCount(); ++l)
 			{
 				FbxGeometryElementTangent* leTangent = pMesh->GetElementTangent(l);
-				FBXSDK_sprintf(header, 100, "            Tangent: ");
+				FBXSDK_sprintf(header, 100, "vtan ");
 
 				if (leTangent->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 				{
@@ -276,7 +277,7 @@ string PrintPolygons(FbxMesh* pMesh)
 
 				FbxGeometryElementBinormal* leBinormal = pMesh->GetElementBinormal(l);
 
-				FBXSDK_sprintf(header, 100, "            Binormal: ");
+				FBXSDK_sprintf(header, 100, "vbin ");
 				if (leBinormal->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 				{
 					switch (leBinormal->GetReferenceMode())

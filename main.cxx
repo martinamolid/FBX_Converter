@@ -38,6 +38,7 @@
 #include "DisplayGenericInfo.h"
 
 #include "PrintMesh.h"
+#include "PrintHierarchy.h"
 
 #include <iostream>
 #include <fstream>
@@ -48,8 +49,8 @@ using namespace std;
 #pragma comment(lib,"zlib-mt.lib")
 
 // Local function prototypes.
-void DisplayContent(FbxScene* pScene);
-string DisplayContent(FbxNode* pNode);
+string PrintContent(FbxScene* pScene);
+string PrintContent(FbxNode* pNode);
 void DisplayTarget(FbxNode* pNode);
 void DisplayTransformPropagation(FbxNode* pNode);
 void DisplayGeometricTransform(FbxNode* pNode);
@@ -62,6 +63,9 @@ int main(int argc, char** argv)
     FbxManager* lSdkManager = NULL;
     FbxScene* lScene = NULL;
     bool lResult;
+
+	ofstream file;
+	file.open("xTest.txt");	// MM: Change this to a filename of choice and right filetype later
 
     // Prepare the FBX SDK.
     InitializeSdkObjects(lSdkManager, lScene);
@@ -111,11 +115,11 @@ int main(int argc, char** argv)
 
         FBXSDK_printf("\n\n---------\nHierarchy\n---------\n\n");
 
-        if( gVerbose ) DisplayHierarchy(lScene);
+        //if( gVerbose ) file << PrintHierarchy(lScene);
 
         FBXSDK_printf("\n\n------------\nNode Content\n------------\n\n");
 
-        if( gVerbose ) DisplayContent(lScene);
+        if( gVerbose ) file << PrintContent(lScene);
 
         FBXSDK_printf("\n\n----\nPose\n----\n\n");
 
@@ -134,29 +138,33 @@ int main(int argc, char** argv)
     // Destroy all objects created by the FBX SDK.
     DestroySdkObjects(lSdkManager, lResult);
 
+	file.close();
     return 0;
 }
 
-void DisplayContent(FbxScene* pScene)
+string PrintContent(FbxScene* pScene)
 {
     int i;
     FbxNode* lNode = pScene->GetRootNode();
 
-	ofstream file;
-	file.open("xTest.txt");	// MM: Change this to a filename of choice and right filetype later
+	string pString;
+
+	//ofstream file;
+	//file.open("xTest.txt");	// MM: Change this to a filename of choice and right filetype later
 
     if(lNode)
     {
         for(i = 0; i < lNode->GetChildCount(); i++)
         {
-            file << DisplayContent(lNode->GetChild(i));
+            pString += PrintContent(lNode->GetChild(i));
         }
     }
 
-	file.close();
+	//file.close();
+	return pString;
 }
 
-string DisplayContent(FbxNode* pNode)
+string PrintContent(FbxNode* pNode)
 {
     FbxNodeAttribute::EType lAttributeType;
     int i;
@@ -218,7 +226,8 @@ string DisplayContent(FbxNode* pNode)
 
     for(i = 0; i < pNode->GetChildCount(); i++)
     {
-        DisplayContent(pNode->GetChild(i));
+        pString += PrintContent(pNode->GetChild(i));
+		
     }
 
 	return pString;
