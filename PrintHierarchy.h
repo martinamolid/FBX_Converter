@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DisplayCommon.h"
+#include "PrintInfo.h"
 
 string PrintHierarchy(FbxScene* pScene);
 string PrintHierarchy(FbxNode* pNode, int pDepth);

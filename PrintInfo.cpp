@@ -1,6 +1,55 @@
 #include "PrintInfo.h"
 
 
+string PrintString(const char* pHeader, const char* pValue /* = "" */, const char* pSuffix /* = "" */)
+{
+	string lString;
+
+	lString = pHeader;
+	lString += pValue;
+	lString += pSuffix;
+	lString += "\n";
+	return lString;
+}
+
+string PrintBool(const char* pHeader, bool pValue, const char* pSuffix /* = "" */)
+{
+	string lString;
+
+	lString = pHeader;
+	lString += pValue ? "true" : "false";
+	lString += pSuffix;
+	lString += "\n";
+	return lString;
+}
+
+string PrintInt(const char* pHeader, int pValue, const char* pSuffix /* = "" */)
+{
+	string lString;
+
+	lString = pHeader;
+	lString += to_string(pValue);
+	lString += pSuffix;
+	lString += "\n";
+	return lString;
+}
+
+
+string PrintDouble(const char* pHeader, double pValue, const char* pSuffix /* = "" */)
+{
+	string lString;
+	FbxString lFloatValue = (float)pValue;
+
+	lFloatValue = pValue <= -HUGE_VAL ? "-INFINITY" : lFloatValue.Buffer();
+	lFloatValue = pValue >= HUGE_VAL ? "INFINITY" : lFloatValue.Buffer();
+
+	lString = pHeader;
+	lString += lFloatValue;
+	lString += pSuffix;
+	lString += "\n";
+	return lString;
+}
+
 string Print2DVector(const char* pHeader, FbxVector2 pValue)
 {
 	string lString;
@@ -78,34 +127,33 @@ string PrintColor(const char* pHeader, FbxColor pValue)
 	string lString;
 
 	lString = pHeader;
-	lString += (float)pValue.mRed;
+	lString += to_string((float)pValue.mRed);
 
-	lString += " (red), ";
-	lString += (float)pValue.mGreen;
+	lString += ", ";
+	lString += to_string((float)pValue.mGreen);
 
-	lString += " (green), ";
-	lString += (float)pValue.mBlue;
+	lString += ", ";
+	lString += to_string((float)pValue.mBlue);
 
-	lString += " (blue)";
 	lString += "\n";
 	return lString;
 }
 
-string PrintColor(const char* pHeader, FbxPropertyT<FbxDouble3> pValue)
-{
-	// THIS SHOULD PROBABLY BE REMOVED, IT SEEMS USELESS
-	string lString;
-
-	lString = pHeader;
-	//lString += (float) pValue.mRed;
-	//lString += (double)pValue.GetArrayItem(0);
-	lString += " (red), ";
-	//lString += (float) pValue.mGreen;
-	//lString += (double)pValue.GetArrayItem(1);
-	lString += " (green), ";
-	//lString += (float) pValue.mBlue;
-	//lString += (double)pValue.GetArrayItem(2);
-	lString += " (blue)";
-	lString += "\n";
-	return lString;
-}
+//string PrintColor(const char* pHeader, FbxPropertyT<FbxDouble3> pValue)
+//{
+//	// THIS SHOULD PROBABLY BE REMOVED, IT SEEMS USELESS
+//	string lString;
+//
+//	lString = pHeader;
+//	//lString += (float) pValue.mRed;
+//	//lString += (double)pValue.GetArrayItem(0);
+//	lString += " (red), ";
+//	//lString += (float) pValue.mGreen;
+//	//lString += (double)pValue.GetArrayItem(1);
+//	lString += " (green), ";
+//	//lString += (float) pValue.mBlue;
+//	//lString += (double)pValue.GetArrayItem(2);
+//	lString += " (blue)";
+//	lString += "\n";
+//	return lString;
+//}

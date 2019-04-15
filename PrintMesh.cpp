@@ -1,5 +1,7 @@
 #include "PrintMesh.h"
 
+#include "PrintMaterial.h"
+
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -8,7 +10,7 @@ using namespace std;
 
 string PrintControlsPoints(FbxMesh* pMesh);
 string PrintPolygons(FbxMesh* pMesh);
-//void PrintMaterialMapping(FbxMesh* pMesh);
+string PrintMaterialMapping(FbxMesh* pMesh);
 //void PrintTextureMapping(FbxMesh* pMesh);
 //void PrintTextureNames(FbxProperty &pProperty, FbxString& pConnectionString);
 //void PrintMaterialConnections(FbxMesh* pMesh);
@@ -22,6 +24,9 @@ string PrintMesh(FbxNode* pNode) {
 	pString += "Mesh: " + name + "\n";
 	//pString += PrintControlsPoints(pMesh);
 	pString += PrintPolygons(pMesh);
+	pString += "\n";
+	pString += PrintMaterialMapping(pMesh);
+	pString += PrintMaterial(pMesh);
 	pString += "\n";
 
 	return pString;
@@ -304,6 +309,74 @@ string PrintPolygons(FbxMesh* pMesh)
 	//DisplayString("");
 	return pString;
 }
+
+string PrintMaterialMapping(FbxMesh* pMesh)
+{
+	const char* lMappingTypes[] = { "None", "By Control Point", "By Polygon Vertex", "By Polygon", "By Edge", "All Same" };
+	const char* lReferenceMode[] = { "Direct", "Index", "Index to Direct" };
+
+	string pString; 
+
+	int lMtrlCount = 0;
+	FbxNode* lNode = NULL;
+	if (pMesh) {
+		lNode = pMesh->GetNode();
+		if (lNode)
+			lMtrlCount = lNode->GetMaterialCount();
+	}
+
+	for (int l = 0; l < pMesh->GetElementMaterialCount(); l++)
+	{
+		FbxGeometryElementMaterial* leMat = pMesh->GetElementMaterial(l);
+		if (leMat)
+		{
+			char header[100];
+			FBXSDK_sprintf(header, 100, "    Material Element %d: ", l);
+			pString += PrintString(header);
+			//pString += header;
+
+
+			pString += PrintString("           Mapping: ", lMappingTypes[leMat->GetMappingMode()]);
+			pString += PrintString("           ReferenceMode: ", lReferenceMode[leMat->GetReferenceMode()]);
+
+			int lMaterialCount = 0;
+			//FbxString lString;
+
+			if (leMat->GetReferenceMode() == FbxGeometryElement::eDirect ||
+				leMat->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
+			{
+				lMaterialCount = lMtrlCount;
+			}
+
+			if (leMat->GetReferenceMode() == FbxGeometryElement::eIndex ||
+				leMat->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
+			{
+				int i;
+
+				pString += "           Indices: ";
+
+				int lIndexArrayCount = leMat->GetIndexArray().GetCount();
+				for (i = 0; i < lIndexArrayCount; i++)
+				{
+					pString += to_string(leMat->GetIndexArray().GetAt(i));
+
+					if (i < lIndexArrayCount - 1)
+					{
+						pString += ", ";
+					}
+				}
+
+				pString += "\n";
+
+				//FBXSDK_printf(lString);
+			}
+		}
+	}
+
+	//DisplayString("");
+	return pString;
+}
+
 
 //string PrintTextureNames(FbxProperty &pProperty, FbxString& pConnectionString)
 //{
