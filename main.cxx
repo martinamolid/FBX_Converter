@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 
 	if( lFilePath.IsEmpty() )
 	{
-		lFilePath = "hierCubes.fbx";
+		lFilePath = "basicBox.fbx";
 		lResult = LoadScene(lSdkManager, lScene, lFilePath.Buffer());
         //lResult = false;
         //FBXSDK_printf("\n\nUsage: ImportScene <FBX file name>\n\n");
@@ -139,6 +139,7 @@ int main(int argc, char** argv)
     DestroySdkObjects(lSdkManager, lResult);
 
 	file.close();
+
     return 0;
 }
 
