@@ -1,145 +1,149 @@
 #include "PrintMesh.h"
 
+#include "Filenames.h"
+
 #include "PrintMaterial.h"
+#include "PrintTexture.h"
 
 #include <iostream>
 #include <fstream>
-//#include <vector>
 using namespace std;
 
 //#define MAT_HEADER_LENGTH 200
 
-void BinaryConvert(string name);
+//void BinaryConvert(string name);
 
-string PrintControlsPoints(FbxMesh* pMesh);
+//string PrintControlsPoints(FbxMesh* pMesh);
 string PrintPolygons(FbxMesh* pMesh);
-string PrintMaterialMapping(FbxMesh* pMesh);
+//string PrintMaterialMapping(FbxMesh* pMesh);
 //void PrintTextureMapping(FbxMesh* pMesh);
 //void PrintTextureNames(FbxProperty &pProperty, FbxString& pConnectionString);
 //void PrintMaterialConnections(FbxMesh* pMesh);
 //void PrintMaterialTextureConnections(FbxSurfaceMaterial* pMaterial, char * header, int pMatId, int l);
 
 struct Vertex {
-	float x, y, z;
-	float u, v;
-	float nx, ny, nz;
+	float pos[3];
+	float uv[2];
+	float norm[3];
+	float tan[3];
+	float binorm[3];
 };
 
 string PrintMesh(FbxNode* pNode) {
 	FbxMesh* pMesh = (FbxMesh*)pNode->GetNodeAttribute();
 	string pString;
-	//string backupNorm;
 
-	string name = (char *)pNode->GetName();
-	pString += "Mesh: " + name + "\n";
-	//pString += PrintControlsPoints(pMesh);
-	//backupNorm += PrintControlsPoints(pMesh);
+	//string name = (char *)pNode->GetName();
+	//pString += "Mesh: " + name + "\n";
+	///pString += PrintControlsPoints(pMesh);
 	pString += PrintPolygons(pMesh);
-	//pString += "\n";
-	//pString += PrintMaterialMapping(pMesh);
-	//pString += PrintMaterial(pMesh);
+	pString += "\n";
+	///pString += PrintMaterialMapping(pMesh);
+	pString += PrintMaterial(pMesh);
+	pString += "\n";
+	pString += PrintTexture(pMesh);
 	pString += "\n";
 
 	return pString;
 }
 
-void BinaryConvert(string name) {
+//void BinaryConvert(string name) {
+//
+//	ifstream binIn(name, ifstream::binary);
+//	int nrOfVertices = 0;
+//	binIn.read((char*)&nrOfVertices, sizeof(int));
+//	Vertex* vtxBuff = new Vertex[nrOfVertices];
+//	binIn.read((char*)vtxBuff, sizeof(Vertex)*nrOfVertices);
+//	binIn.close();
+//
+//	ofstream binOut("xBinOut.txt", ofstream::out);
+//	binOut << nrOfVertices << endl;
+//	for (int i = 0; i < nrOfVertices; i++) {
+//		binOut << vtxBuff[i].x << " " << vtxBuff[i].y << " " << vtxBuff[i].z << endl;
+//		binOut << vtxBuff[i].u << " " << vtxBuff[i].v << endl;
+//		binOut << vtxBuff[i].nx << " " << vtxBuff[i].ny << " " << vtxBuff[i].nz << endl;
+//	}
+//	binOut.close();
+//
+//	delete[] vtxBuff;
+//}
 
-	ifstream binIn(name, ifstream::binary);
-	int nrOfVertices = 0;
-	binIn.read((char*)&nrOfVertices, sizeof(int));
-	Vertex* vtxBuff = new Vertex[nrOfVertices];
-	binIn.read((char*)vtxBuff, sizeof(Vertex)*nrOfVertices);
-	binIn.close();
-
-	ofstream binOut("xBinOut.txt", ofstream::out);
-	binOut << nrOfVertices << endl;
-	for (int i = 0; i < nrOfVertices; i++) {
-		binOut << vtxBuff[i].x << " " << vtxBuff[i].y << " " << vtxBuff[i].z << endl;
-		binOut << vtxBuff[i].u << " " << vtxBuff[i].v << endl;
-		binOut << vtxBuff[i].nx << " " << vtxBuff[i].ny << " " << vtxBuff[i].nz << endl;
-	}
-	binOut.close();
-
-	delete[] vtxBuff;
-}
-
-string PrintControlsPoints(FbxMesh* pMesh)
-{
-	string pString;
-	int i, lControlPointsCount = pMesh->GetControlPointsCount();
-	FbxVector4* lControlPoints = pMesh->GetControlPoints();
-
-	ofstream binFile ("xBin.bin", ofstream::binary);
-
-	struct vtxCoord {
-		float x, y, z;
-	};
-
-	int size = 0;
-
-	vtxCoord *farr = nullptr;
-
-	pString += "        Control Points Count: " + to_string(lControlPointsCount) + "\n";
-	// DEFINE SIZE HERE BASED ON CONTROL POINTS
-	size = sizeof(vtxCoord) * lControlPointsCount;
-	farr = new vtxCoord[size];
-
-	binFile.write((char*)&lControlPointsCount, sizeof(int));
-
-	for (i = 0; i < lControlPointsCount; i++)
-	{
-		//pString += "        Control Point " + to_string(i);
-		pString += Print3DVector("            Coordinates: ", lControlPoints[i]);
-		//pString += Print3DVector("", lControlPoints[i]);
-
-		farr[i].x = lControlPoints[i][0];
-		farr[i].y = lControlPoints[i][1];
-		farr[i].z = lControlPoints[i][2];
-
-		for (int j = 0; j < pMesh->GetElementNormalCount(); j++)
-		{
-			FbxGeometryElementNormal* leNormals = pMesh->GetElementNormal(j);
-			if (leNormals->GetMappingMode() == FbxGeometryElement::eByControlPoint)
-			{
-				char header[100];
-				FBXSDK_sprintf(header, 100, "            Normal Vector: ");
-				if (leNormals->GetReferenceMode() == FbxGeometryElement::eDirect)
-					pString += Print3DVector(header, leNormals->GetDirectArray().GetAt(i));
-			}
-		}
-	}
-
-	binFile.write((char*) farr, size);
-	//binFile.write((char*)&f, sizeof(float));
-	binFile.close();
-
-	int newSize = 0;
-	
-	ifstream binIn("xBin.bin", ifstream::binary);
-	//binIn.seekg(0, binIn.end);
-	//newSize = binIn.tellg();
-	//binIn.seekg(0);
-	int nrOfCPs = 0;
-	binIn.read((char*)&nrOfCPs, sizeof(int));
-	vtxCoord* fbuff = new vtxCoord[nrOfCPs];
-	binIn.read((char*)fbuff, sizeof(vtxCoord)*nrOfCPs);
-	binIn.close();
-
-	ofstream binOut("xBinOut.txt");
-	binOut << nrOfCPs << endl;
-	for (int i = 0; i < nrOfCPs; i++) {
-		binOut << fbuff[i].x << " " << fbuff[i].y << " " << fbuff[i].z << endl;
-	}
-	binOut.close();
-
-	//BinaryConvert("xBin.bin");
-
-	delete[] fbuff;
-	delete[] farr;
-
-	return pString;
-}
+//string PrintControlsPoints(FbxMesh* pMesh)
+//{
+//	string pString;
+//	int i, lControlPointsCount = pMesh->GetControlPointsCount();
+//	FbxVector4* lControlPoints = pMesh->GetControlPoints();
+//
+//	ofstream binFile ("xBin.bin", ofstream::binary);
+//
+//	struct vtxCoord {
+//		float x, y, z;
+//	};
+//
+//	int size = 0;
+//
+//	vtxCoord *farr = nullptr;
+//
+//	pString += "        Control Points Count: " + to_string(lControlPointsCount) + "\n";
+//	// DEFINE SIZE HERE BASED ON CONTROL POINTS
+//	size = sizeof(vtxCoord) * lControlPointsCount;
+//	farr = new vtxCoord[size];
+//
+//	binFile.write((char*)&lControlPointsCount, sizeof(int));
+//
+//	for (i = 0; i < lControlPointsCount; i++)
+//	{
+//		//pString += "        Control Point " + to_string(i);
+//		pString += Print3DVector("            Coordinates: ", lControlPoints[i]);
+//		//pString += Print3DVector("", lControlPoints[i]);
+//
+//		farr[i].x = lControlPoints[i][0];
+//		farr[i].y = lControlPoints[i][1];
+//		farr[i].z = lControlPoints[i][2];
+//
+//		for (int j = 0; j < pMesh->GetElementNormalCount(); j++)
+//		{
+//			FbxGeometryElementNormal* leNormals = pMesh->GetElementNormal(j);
+//			if (leNormals->GetMappingMode() == FbxGeometryElement::eByControlPoint)
+//			{
+//				char header[100];
+//				FBXSDK_sprintf(header, 100, "            Normal Vector: ");
+//				if (leNormals->GetReferenceMode() == FbxGeometryElement::eDirect)
+//					pString += Print3DVector(header, leNormals->GetDirectArray().GetAt(i));
+//			}
+//		}
+//	}
+//
+//	binFile.write((char*) farr, size);
+//	//binFile.write((char*)&f, sizeof(float));
+//	binFile.close();
+//
+//	//int newSize = 0;
+//	//
+//	//ifstream binIn("xBin.bin", ifstream::binary);
+//	////binIn.seekg(0, binIn.end);
+//	////newSize = binIn.tellg();
+//	////binIn.seekg(0);
+//	//int nrOfCPs = 0;
+//	//binIn.read((char*)&nrOfCPs, sizeof(int));
+//	//vtxCoord* fbuff = new vtxCoord[nrOfCPs];
+//	//binIn.read((char*)fbuff, sizeof(vtxCoord)*nrOfCPs);
+//	//binIn.close();
+//
+//	//ofstream binOut("xBinOut.txt");
+//	//binOut << nrOfCPs << endl;
+//	//for (int i = 0; i < nrOfCPs; i++) {
+//	//	binOut << fbuff[i].x << " " << fbuff[i].y << " " << fbuff[i].z << endl;
+//	//}
+//	//binOut.close();
+//
+//	////BinaryConvert("xBin.bin");
+//
+//	//delete[] fbuff;
+//	delete[] farr;
+//
+//	return pString;
+//}
 
 string PrintPolygons(FbxMesh* pMesh)
 {
@@ -148,8 +152,6 @@ string PrintPolygons(FbxMesh* pMesh)
 	int i, j, lPolygonCount = pMesh->GetPolygonCount();
 	FbxVector4* lControlPoints = pMesh->GetControlPoints();
 	char header[100];
-
-	int polySize = 3; // MM: There's no way to get the poly size for every poly, as each and every has their own size. Assuming it is triangulated, we'll hardcode this for now
 
 	//FbxMesh* parent = pMesh->GetDstObject();
 	//MM This entire parent name part is a train wreck, needs more testing with a FBX with actual hierarchies
@@ -160,19 +162,20 @@ string PrintPolygons(FbxMesh* pMesh)
 		}
 	}*/
 
-	ofstream binVtxFile("xBinVtx.bin", ofstream::binary);
+	ofstream binVtxFile(BINARY_FILE, ofstream::binary | ofstream::app);
 
-	pString += "pc " + to_string(lPolygonCount) + "\n";
-	//pString += "Vtx Count: " + to_string(lPolygonCount*polySize) + "\n";
+	int nrOfMat = pMesh->GetElementMaterialCount();
+	//cout << "Material Count in PrintPolygons: " << nrOfMat << endl;
+	pString += "mat count " + to_string(nrOfMat) + "\n";
+	binVtxFile.write((char*)&nrOfMat, sizeof(int));
+
 	int vtxCount = pMesh->GetPolygonVertexCount();
-	//vtxCount = lPolygonCount * polySize;
+	pString += "vtx count " + to_string(vtxCount) + "\n";
 	binVtxFile.write((char*)&vtxCount, sizeof(int));
 
 	Vertex *vertices = new Vertex[vtxCount];
 
-	//int currentVtx = 0;
 	int vertexId = 0;
-	//for (i = 0; i < vtxCount; i++)
 	for (i = 0; i < lPolygonCount; i++)
 	{
 		//pString += "        Polygon " + to_string(i) + "\n";
@@ -198,7 +201,6 @@ string PrintPolygons(FbxMesh* pMesh)
 			}
 		}
 
-		//pMesh->GetPolygonVertexCount();
 		int lPolygonSize = pMesh->GetPolygonSize(i);
 
 		for (j = 0; j < lPolygonSize; j++)
@@ -212,9 +214,9 @@ string PrintPolygons(FbxMesh* pMesh)
 			else
 			{
 				pString += Print3DVector("v ", lControlPoints[lControlPointIndex]);
-				vertices[vertexId].x = lControlPoints[lControlPointIndex][0];
-				vertices[vertexId].y = lControlPoints[lControlPointIndex][1];
-				vertices[vertexId].z = lControlPoints[lControlPointIndex][2];
+				vertices[vertexId].pos[0] = lControlPoints[lControlPointIndex][0];
+				vertices[vertexId].pos[1] = lControlPoints[lControlPointIndex][1];
+				vertices[vertexId].pos[2] = lControlPoints[lControlPointIndex][2];
 
 			}
 
@@ -283,15 +285,15 @@ string PrintPolygons(FbxMesh* pMesh)
 					{
 					case FbxGeometryElement::eDirect:
 						pString += Print2DVector(header, leUV->GetDirectArray().GetAt(lControlPointIndex));
-						vertices[vertexId].u = leUV->GetDirectArray().GetAt(lControlPointIndex)[0];
-						vertices[vertexId].v = leUV->GetDirectArray().GetAt(lControlPointIndex)[1];
+						vertices[vertexId].uv[0] = leUV->GetDirectArray().GetAt(lControlPointIndex)[0];
+						vertices[vertexId].uv[1] = leUV->GetDirectArray().GetAt(lControlPointIndex)[1];
 						break;
 					case FbxGeometryElement::eIndexToDirect:
 					{
 						int id = leUV->GetIndexArray().GetAt(lControlPointIndex);
 						pString += Print2DVector(header, leUV->GetDirectArray().GetAt(id));
-						vertices[vertexId].u = leUV->GetDirectArray().GetAt(id)[0];
-						vertices[vertexId].v = leUV->GetDirectArray().GetAt(id)[1];
+						vertices[vertexId].uv[0] = leUV->GetDirectArray().GetAt(id)[0];
+						vertices[vertexId].uv[1] = leUV->GetDirectArray().GetAt(id)[1];
 					}
 					break;
 					default:
@@ -308,8 +310,8 @@ string PrintPolygons(FbxMesh* pMesh)
 					case FbxGeometryElement::eIndexToDirect:
 					{
 						pString += Print2DVector(header, leUV->GetDirectArray().GetAt(lTextureUVIndex));
-						vertices[vertexId].u = leUV->GetDirectArray().GetAt(lTextureUVIndex)[0];
-						vertices[vertexId].v = leUV->GetDirectArray().GetAt(lTextureUVIndex)[1];
+						vertices[vertexId].uv[0] = leUV->GetDirectArray().GetAt(lTextureUVIndex)[0];
+						vertices[vertexId].uv[1] = leUV->GetDirectArray().GetAt(lTextureUVIndex)[1];
 					}
 					break;
 					default:
@@ -335,17 +337,17 @@ string PrintPolygons(FbxMesh* pMesh)
 					{
 					case FbxGeometryElement::eDirect:
 						pString += Print3DVector(header, leNormal->GetDirectArray().GetAt(vertexId));
-						vertices[vertexId].nx = leNormal->GetDirectArray().GetAt(vertexId)[0];
-						vertices[vertexId].ny = leNormal->GetDirectArray().GetAt(vertexId)[1];
-						vertices[vertexId].nz = leNormal->GetDirectArray().GetAt(vertexId)[2];
+						vertices[vertexId].norm[0] = leNormal->GetDirectArray().GetAt(vertexId)[0];
+						vertices[vertexId].norm[1] = leNormal->GetDirectArray().GetAt(vertexId)[1];
+						vertices[vertexId].norm[2] = leNormal->GetDirectArray().GetAt(vertexId)[2];
 						break;
 					case FbxGeometryElement::eIndexToDirect:
 					{
 						int id = leNormal->GetIndexArray().GetAt(vertexId);
 						pString += Print3DVector(header, leNormal->GetDirectArray().GetAt(id));
-						vertices[vertexId].nx = leNormal->GetDirectArray().GetAt(id)[0];
-						vertices[vertexId].ny = leNormal->GetDirectArray().GetAt(id)[1];
-						vertices[vertexId].nz = leNormal->GetDirectArray().GetAt(id)[2];
+						vertices[vertexId].norm[0] = leNormal->GetDirectArray().GetAt(id)[0];
+						vertices[vertexId].norm[1] = leNormal->GetDirectArray().GetAt(id)[1];
+						vertices[vertexId].norm[2] = leNormal->GetDirectArray().GetAt(id)[2];
 					}
 					break;
 					default:
@@ -366,11 +368,17 @@ string PrintPolygons(FbxMesh* pMesh)
 					{
 					case FbxGeometryElement::eDirect:
 						pString += Print3DVector(header, leTangent->GetDirectArray().GetAt(vertexId));
+						vertices[vertexId].tan[0] = leTangent->GetDirectArray().GetAt(vertexId)[0];
+						vertices[vertexId].tan[1] = leTangent->GetDirectArray().GetAt(vertexId)[1];
+						vertices[vertexId].tan[2] = leTangent->GetDirectArray().GetAt(vertexId)[2];
 						break;
 					case FbxGeometryElement::eIndexToDirect:
 					{
 						int id = leTangent->GetIndexArray().GetAt(vertexId);
 						pString += Print3DVector(header, leTangent->GetDirectArray().GetAt(id));
+						vertices[vertexId].tan[0] = leTangent->GetDirectArray().GetAt(id)[0];
+						vertices[vertexId].tan[1] = leTangent->GetDirectArray().GetAt(id)[1];
+						vertices[vertexId].tan[2] = leTangent->GetDirectArray().GetAt(id)[2];
 					}
 					break;
 					default:
@@ -391,11 +399,17 @@ string PrintPolygons(FbxMesh* pMesh)
 					{
 					case FbxGeometryElement::eDirect:
 						pString += Print3DVector(header, leBinormal->GetDirectArray().GetAt(vertexId));
+						vertices[vertexId].binorm[0] = leBinormal->GetDirectArray().GetAt(vertexId)[0];
+						vertices[vertexId].binorm[1] = leBinormal->GetDirectArray().GetAt(vertexId)[1];
+						vertices[vertexId].binorm[2] = leBinormal->GetDirectArray().GetAt(vertexId)[2];
 						break;
 					case FbxGeometryElement::eIndexToDirect:
 					{
 						int id = leBinormal->GetIndexArray().GetAt(vertexId);
 						pString += Print3DVector(header, leBinormal->GetDirectArray().GetAt(id));
+						vertices[vertexId].binorm[0] = leBinormal->GetDirectArray().GetAt(id)[0];
+						vertices[vertexId].binorm[1] = leBinormal->GetDirectArray().GetAt(id)[1];
+						vertices[vertexId].binorm[2] = leBinormal->GetDirectArray().GetAt(id)[2];
 					}
 					break;
 					default:
@@ -409,78 +423,77 @@ string PrintPolygons(FbxMesh* pMesh)
 
 	binVtxFile.write((char*)vertices, sizeof(Vertex)*vtxCount);
 	delete[] vertices;
-	BinaryConvert("xBinVtx.bin");
-	//DisplayString("");
+	///BinaryConvert("xBinVtx.bin");
 	binVtxFile.close();
 	return pString;
 }
 
-string PrintMaterialMapping(FbxMesh* pMesh)
-{
-	const char* lMappingTypes[] = { "None", "By Control Point", "By Polygon Vertex", "By Polygon", "By Edge", "All Same" };
-	const char* lReferenceMode[] = { "Direct", "Index", "Index to Direct" };
-
-	string pString; 
-
-	int lMtrlCount = 0;
-	FbxNode* lNode = NULL;
-	if (pMesh) {
-		lNode = pMesh->GetNode();
-		if (lNode)
-			lMtrlCount = lNode->GetMaterialCount();
-	}
-
-	for (int l = 0; l < pMesh->GetElementMaterialCount(); l++)
-	{
-		FbxGeometryElementMaterial* leMat = pMesh->GetElementMaterial(l);
-		if (leMat)
-		{
-			char header[100];
-			FBXSDK_sprintf(header, 100, "    Material Element %d: ", l);
-			pString += PrintString(header);
-			//pString += header;
-
-
-			pString += PrintString("           Mapping: ", lMappingTypes[leMat->GetMappingMode()]);
-			pString += PrintString("           ReferenceMode: ", lReferenceMode[leMat->GetReferenceMode()]);
-
-			int lMaterialCount = 0;
-			//FbxString lString;
-
-			if (leMat->GetReferenceMode() == FbxGeometryElement::eDirect ||
-				leMat->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
-			{
-				lMaterialCount = lMtrlCount;
-			}
-
-			if (leMat->GetReferenceMode() == FbxGeometryElement::eIndex ||
-				leMat->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
-			{
-				int i;
-
-				pString += "           Indices: ";
-
-				int lIndexArrayCount = leMat->GetIndexArray().GetCount();
-				for (i = 0; i < lIndexArrayCount; i++)
-				{
-					pString += to_string(leMat->GetIndexArray().GetAt(i));
-
-					if (i < lIndexArrayCount - 1)
-					{
-						pString += ", ";
-					}
-				}
-
-				pString += "\n";
-
-				//FBXSDK_printf(lString);
-			}
-		}
-	}
-
-	//DisplayString("");
-	return pString;
-}
+//string PrintMaterialMapping(FbxMesh* pMesh)
+//{
+//	const char* lMappingTypes[] = { "None", "By Control Point", "By Polygon Vertex", "By Polygon", "By Edge", "All Same" };
+//	const char* lReferenceMode[] = { "Direct", "Index", "Index to Direct" };
+//
+//	string pString; 
+//
+//	int lMtrlCount = 0;
+//	FbxNode* lNode = NULL;
+//	if (pMesh) {
+//		lNode = pMesh->GetNode();
+//		if (lNode)
+//			lMtrlCount = lNode->GetMaterialCount();
+//	}
+//
+//	for (int l = 0; l < pMesh->GetElementMaterialCount(); l++)
+//	{
+//		FbxGeometryElementMaterial* leMat = pMesh->GetElementMaterial(l);
+//		if (leMat)
+//		{
+//			char header[100];
+//			FBXSDK_sprintf(header, 100, "    Material Element %d: ", l);
+//			pString += PrintString(header);
+//			//pString += header;
+//
+//
+//			pString += PrintString("           Mapping: ", lMappingTypes[leMat->GetMappingMode()]);
+//			pString += PrintString("           ReferenceMode: ", lReferenceMode[leMat->GetReferenceMode()]);
+//
+//			int lMaterialCount = 0;
+//			//FbxString lString;
+//
+//			if (leMat->GetReferenceMode() == FbxGeometryElement::eDirect ||
+//				leMat->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
+//			{
+//				lMaterialCount = lMtrlCount;
+//			}
+//
+//			if (leMat->GetReferenceMode() == FbxGeometryElement::eIndex ||
+//				leMat->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
+//			{
+//				int i;
+//
+//				pString += "           Indices: ";
+//
+//				int lIndexArrayCount = leMat->GetIndexArray().GetCount();
+//				for (i = 0; i < lIndexArrayCount; i++)
+//				{
+//					pString += to_string(leMat->GetIndexArray().GetAt(i));
+//
+//					if (i < lIndexArrayCount - 1)
+//					{
+//						pString += ", ";
+//					}
+//				}
+//
+//				pString += "\n";
+//
+//				//FBXSDK_printf(lString);
+//			}
+//		}
+//	}
+//
+//	//DisplayString("");
+//	return pString;
+//}
 
 
 //string PrintTextureNames(FbxProperty &pProperty, FbxString& pConnectionString)

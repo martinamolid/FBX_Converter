@@ -37,8 +37,10 @@
 #include "DisplayUserProperties.h"
 #include "DisplayGenericInfo.h"
 
+#include "Filenames.h"
+
 #include "PrintMesh.h"
-#include "PrintHierarchy.h"
+#include "PrintNrOfMeshes.h"
 
 #include <iostream>
 #include <fstream>
@@ -65,7 +67,7 @@ int main(int argc, char** argv)
     bool lResult;
 
 	ofstream file;
-	file.open("xTest.txt");	// MM: Change this to a filename of choice and right filetype later
+	file.open(ASCII_FILE);	// MM: Change this to a filename of choice and right filetype later
 
     // Prepare the FBX SDK.
     InitializeSdkObjects(lSdkManager, lScene);
@@ -73,24 +75,24 @@ int main(int argc, char** argv)
 
     // The example can take a FBX file as an argument.
 	FbxString lFilePath("");
-	for( int i = 1, c = argc; i < c; ++i )
-	{
-		if( FbxString(argv[i]) == "-test" ) gVerbose = false;
-		else if( lFilePath.IsEmpty() ) lFilePath = argv[i];
-	}
+	//for( int i = 1, c = argc; i < c; ++i )
+	//{
+	//	if( FbxString(argv[i]) == "-test" ) gVerbose = false;
+	//	else if( lFilePath.IsEmpty() ) lFilePath = argv[i];
+	//}
 
 	if( lFilePath.IsEmpty() )
 	{
-		lFilePath = "basicBox.fbx";
+		lFilePath = IN_FBX_FILEPATH.c_str();
 		lResult = LoadScene(lSdkManager, lScene, lFilePath.Buffer());
         //lResult = false;
         //FBXSDK_printf("\n\nUsage: ImportScene <FBX file name>\n\n");
 	}
-	else
-	{
-		FBXSDK_printf("\n\nFile: %s\n\n", lFilePath.Buffer());
-		lResult = LoadScene(lSdkManager, lScene, lFilePath.Buffer());
-	}
+	//else
+	//{
+	//	FBXSDK_printf("\n\nFile: %s\n\n", lFilePath.Buffer());
+	//	lResult = LoadScene(lSdkManager, lScene, lFilePath.Buffer());
+	//}
 
     if(lResult == false)
     {
@@ -99,47 +101,49 @@ int main(int argc, char** argv)
     else 
     {
         // Display the scene.
-        DisplayMetaData(lScene);
+        //DisplayMetaData(lScene);
 
-        FBXSDK_printf("\n\n---------------------\nGlobal Light Settings\n---------------------\n\n");
+        //FBXSDK_printf("\n\n---------------------\nGlobal Light Settings\n---------------------\n\n");
 
-        if( gVerbose ) DisplayGlobalLightSettings(&lScene->GetGlobalSettings());
+        //if( gVerbose ) //DisplayGlobalLightSettings(&lScene->GetGlobalSettings());
 
-        FBXSDK_printf("\n\n----------------------\nGlobal Camera Settings\n----------------------\n\n");
+        //FBXSDK_printf("\n\n----------------------\nGlobal Camera Settings\n----------------------\n\n");
 
-        if( gVerbose ) DisplayGlobalCameraSettings(&lScene->GetGlobalSettings());
+        //if( gVerbose ) //DisplayGlobalCameraSettings(&lScene->GetGlobalSettings());
 
-        FBXSDK_printf("\n\n--------------------\nGlobal Time Settings\n--------------------\n\n");
+        //FBXSDK_printf("\n\n--------------------\nGlobal Time Settings\n--------------------\n\n");
 
-        if( gVerbose ) DisplayGlobalTimeSettings(&lScene->GetGlobalSettings());
+        //if( gVerbose ) //DisplayGlobalTimeSettings(&lScene->GetGlobalSettings());
 
-        FBXSDK_printf("\n\n---------\nHierarchy\n---------\n\n");
+        //FBXSDK_printf("\n\n---------\nHierarchy\n---------\n\n");
 
-        //if( gVerbose ) file << PrintHierarchy(lScene);
+		if (gVerbose) file << PrintNrOfMeshes(lScene);//PrintHierarchy(lScene);
 
-        FBXSDK_printf("\n\n------------\nNode Content\n------------\n\n");
+        //FBXSDK_printf("\n\n------------\nNode Content\n------------\n\n");
 
         if( gVerbose ) file << PrintContent(lScene);
 
-        FBXSDK_printf("\n\n----\nPose\n----\n\n");
+        //FBXSDK_printf("\n\n----\nPose\n----\n\n");
 
-        if( gVerbose ) DisplayPose(lScene);
+        //if( gVerbose ) //DisplayPose(lScene);
 
-        FBXSDK_printf("\n\n---------\nAnimation\n---------\n\n");
+        //FBXSDK_printf("\n\n---------\nAnimation\n---------\n\n");
 
-        if( gVerbose ) DisplayAnimation(lScene);
+        //if( gVerbose ) //DisplayAnimation(lScene);
 
         //now display generic information
 
-        FBXSDK_printf("\n\n---------\nGeneric Information\n---------\n\n");
-        if( gVerbose ) DisplayGenericInfo(lScene);
+        //FBXSDK_printf("\n\n---------\nGeneric Information\n---------\n\n");
+       // if( gVerbose ) {//DisplayGenericInfo(lScene);
+		//}
+
     }
 
     // Destroy all objects created by the FBX SDK.
     DestroySdkObjects(lSdkManager, lResult);
 
 	file.close();
-
+	system("pause");
     return 0;
 }
 
@@ -150,9 +154,6 @@ string PrintContent(FbxScene* pScene)
 
 	string pString;
 
-	//ofstream file;
-	//file.open("xTest.txt");	// MM: Change this to a filename of choice and right filetype later
-
     if(lNode)
     {
         for(i = 0; i < lNode->GetChildCount(); i++)
@@ -161,7 +162,6 @@ string PrintContent(FbxScene* pScene)
         }
     }
 
-	//file.close();
 	return pString;
 }
 
@@ -185,45 +185,45 @@ string PrintContent(FbxNode* pNode)
 	    default:
 	        break;
         case FbxNodeAttribute::eMarker:  
-            DisplayMarker(pNode);
+            //DisplayMarker(pNode);
             break;
 
         case FbxNodeAttribute::eSkeleton:  
-            DisplaySkeleton(pNode);
+            //DisplaySkeleton(pNode);
             break;
 
         case FbxNodeAttribute::eMesh:      
-            DisplayMesh(pNode);
+            //DisplayMesh(pNode);
 			pString += PrintMesh(pNode);
             break;
 
         case FbxNodeAttribute::eNurbs:      
-            DisplayNurb(pNode);
+            //DisplayNurb(pNode);
             break;
 
         case FbxNodeAttribute::ePatch:     
-            DisplayPatch(pNode);
+            //DisplayPatch(pNode);
             break;
 
         case FbxNodeAttribute::eCamera:    
-            DisplayCamera(pNode);
+            //DisplayCamera(pNode);
             break;
 
         case FbxNodeAttribute::eLight:     
-            DisplayLight(pNode);
+            //DisplayLight(pNode);
             break;
 
         case FbxNodeAttribute::eLODGroup:
-            DisplayLodGroup(pNode);
+            //DisplayLodGroup(pNode);
             break;
         }   
     }
 
-    DisplayUserProperties(pNode);
+    /*DisplayUserProperties(pNode);
     DisplayTarget(pNode);
     DisplayPivotsAndLimits(pNode);
     DisplayTransformPropagation(pNode);
-    DisplayGeometricTransform(pNode);
+    DisplayGeometricTransform(pNode);*/
 
     for(i = 0; i < pNode->GetChildCount(); i++)
     {
