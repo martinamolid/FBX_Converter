@@ -147,8 +147,8 @@ string FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplay
 				{
 					//display connected Material header only at the first time
 					if (pDisplayHeader) {
-						cout << "Number of textures in PrintTexture: " << lTextureCount << endl;
-						pString += PrintInt("Nr of Textures in Material: ", lTextureCount);
+						//cout << "Number of textures in PrintTexture: " << lTextureCount << endl;
+						//pString += PrintInt("Nr of Textures in Material: ", lTextureCount);
 						pString += PrintInt("    Textures connected to Material ", pMaterialIndex);
 						binFile.write((char*)&pMaterialIndex, sizeof(int));
 						pDisplayHeader = false;

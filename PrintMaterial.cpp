@@ -16,6 +16,7 @@ struct PhongMaterial {
 	float opacity;
 	float shininess;
 	float reflectivity;
+	int nrOfTextures;
 };
 
 // RESTRUCTURE ENTIRE PHONG MATERIAL WRITING PROCESS TO WRITE TO FILE ONCE
@@ -58,10 +59,10 @@ string PrintMaterial(FbxGeometry* pGeometry)
 
 			FbxSurfaceMaterial *lMaterial = lNode->GetMaterial(lCount);
 
+			
 			pString += PrintString("            Name: \"", (char *)lMaterial->GetName(), "\"");
 			// MM: Printing the material name
-			string tempMatName;
-			tempMatName = lMaterial->GetName();
+			string tempMatName = lMaterial->GetName();
 			int nameLength = strlen(tempMatName.c_str());
 			char matName[NAME_SIZE]; 
 			for (int i = 0; i < nameLength; i++) {
@@ -268,23 +269,39 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				pString += PrintDouble("            Reflectivity: ", lKFbxDouble1.Get());
 				materials[lCount].reflectivity = (float)lKFbxDouble1.Get();
 
+
+				// -- GETTING THE NUMBER OF TEXTURES FOR THE MATERIAL --
 				FbxProperty lProperty;
 				int lTextureCount = 0;
-				int nrOfTextures = 0;
-
-				FbxSurfaceMaterial *textMaterial = lNode->GetSrcObject<FbxSurfaceMaterial>(lCount);
+				bool hasPrinted = false;
+				//int run = 0;
 				int lTextureIndex;
 				FBXSDK_FOR_EACH_TEXTURE(lTextureIndex)
 				{
-					lProperty = textMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[lTextureIndex]);
-					
+					lProperty = lMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[lTextureIndex]);
+					//run++;
 					lTextureCount = lProperty.GetSrcObjectCount<FbxTexture>();
-					nrOfTextures = lTextureCount;
+					for (int j = 0; j < lTextureCount; j++) {
+						FbxTexture* lTexture = lProperty.GetSrcObject<FbxTexture>(j);
+						if (lTexture)
+						{
+							cout << "TEXTURE COUNT: " << lTextureCount << endl;
+							pString += "            Nr of Textures: " + to_string(lTextureCount) +"\n";
+							materials[lCount].nrOfTextures = lTextureCount;
+							hasPrinted = true;
+						}	
+					}
 				}
-				//lProperty = lMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[lTextureIndex]);
-				// ---- WORK ON THIS SOON ----
-				cout << "number of textures in PrintMaterial: " << nrOfTextures << endl;
+				// MM: If there are no textures, this is a fail safe printing out that there are no textures
+				if (hasPrinted == false) {
+					cout << "TEXTURE COUNT: " << 0 << endl;
+					pString += "            Nr of Textures: " + to_string(0) + "\n";
+					materials[lCount].nrOfTextures = 0;
+					hasPrinted = true;
+				}
+				//cout << "Run: " << run << endl;
 
+				// -- Writing the material to the binary file
 				binFile.write((char*)&materials[lCount], sizeof(PhongMaterial));
 			}
 			else if (lMaterial->GetClassId().Is(FbxSurfaceLambert::ClassId))

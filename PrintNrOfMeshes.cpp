@@ -4,6 +4,7 @@
 #include "Filenames.h"
 
 #include <fstream>
+#include <iostream>
 using namespace std;
 
 //string PrintHierarchy(FbxNode* pNode, int pDepth);
@@ -59,13 +60,14 @@ string PrintNrOfMeshes(FbxScene* pScene)
 	int nrOfMeshes = 0;
 
 	ofstream binFile(BINARY_FILE, ofstream::binary);
-
+	//int meshes = lRootNode->GetChildCount();
 	for (i = 0; i < lRootNode->GetChildCount(); i++)
 	{
 		nrOfMeshes += PrintNrOfMeshes(lRootNode->GetChild(i), 0);
 	}
 	int temp = lRootNode->GetChildCount();
 	pString += "Nr of Meshes: " +to_string(nrOfMeshes)+"\n";
+	cout << "Nr of meshes: " << nrOfMeshes << endl;
 	binFile.write((char*)&nrOfMeshes, sizeof(int));
 	binFile.close();
 	return pString;

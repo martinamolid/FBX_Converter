@@ -13,7 +13,7 @@ using namespace std;
 
 //void BinaryConvert(string name);
 
-//string PrintControlsPoints(FbxMesh* pMesh);
+string PrintControlsPoints(FbxMesh* pMesh);
 string PrintPolygons(FbxMesh* pMesh);
 //string PrintMaterialMapping(FbxMesh* pMesh);
 //void PrintTextureMapping(FbxMesh* pMesh);
@@ -41,7 +41,7 @@ string PrintMesh(FbxNode* pNode) {
 	///pString += PrintMaterialMapping(pMesh);
 	pString += PrintMaterial(pMesh);
 	pString += "\n";
-	pString += PrintTexture(pMesh);
+	//pString += PrintTexture(pMesh);
 	pString += "\n";
 
 	return pString;
@@ -74,7 +74,7 @@ string PrintMesh(FbxNode* pNode) {
 //	int i, lControlPointsCount = pMesh->GetControlPointsCount();
 //	FbxVector4* lControlPoints = pMesh->GetControlPoints();
 //
-//	ofstream binFile ("xBin.bin", ofstream::binary);
+//	//ofstream binFile ("xBin.bin", ofstream::binary);
 //
 //	struct vtxCoord {
 //		float x, y, z;
@@ -82,14 +82,14 @@ string PrintMesh(FbxNode* pNode) {
 //
 //	int size = 0;
 //
-//	vtxCoord *farr = nullptr;
+//	//vtxCoord *farr = nullptr;
 //
 //	pString += "        Control Points Count: " + to_string(lControlPointsCount) + "\n";
 //	// DEFINE SIZE HERE BASED ON CONTROL POINTS
-//	size = sizeof(vtxCoord) * lControlPointsCount;
-//	farr = new vtxCoord[size];
+//	//size = sizeof(vtxCoord) * lControlPointsCount;
+//	//farr = new vtxCoord[size];
 //
-//	binFile.write((char*)&lControlPointsCount, sizeof(int));
+//	//binFile.write((char*)&lControlPointsCount, sizeof(int));
 //
 //	for (i = 0; i < lControlPointsCount; i++)
 //	{
@@ -97,9 +97,9 @@ string PrintMesh(FbxNode* pNode) {
 //		pString += Print3DVector("            Coordinates: ", lControlPoints[i]);
 //		//pString += Print3DVector("", lControlPoints[i]);
 //
-//		farr[i].x = lControlPoints[i][0];
-//		farr[i].y = lControlPoints[i][1];
-//		farr[i].z = lControlPoints[i][2];
+//		//farr[i].x = lControlPoints[i][0];
+//		//farr[i].y = lControlPoints[i][1];
+//		//farr[i].z = lControlPoints[i][2];
 //
 //		for (int j = 0; j < pMesh->GetElementNormalCount(); j++)
 //		{
@@ -114,33 +114,10 @@ string PrintMesh(FbxNode* pNode) {
 //		}
 //	}
 //
-//	binFile.write((char*) farr, size);
+//	//binFile.write((char*) farr, size);
 //	//binFile.write((char*)&f, sizeof(float));
-//	binFile.close();
-//
-//	//int newSize = 0;
-//	//
-//	//ifstream binIn("xBin.bin", ifstream::binary);
-//	////binIn.seekg(0, binIn.end);
-//	////newSize = binIn.tellg();
-//	////binIn.seekg(0);
-//	//int nrOfCPs = 0;
-//	//binIn.read((char*)&nrOfCPs, sizeof(int));
-//	//vtxCoord* fbuff = new vtxCoord[nrOfCPs];
-//	//binIn.read((char*)fbuff, sizeof(vtxCoord)*nrOfCPs);
-//	//binIn.close();
-//
-//	//ofstream binOut("xBinOut.txt");
-//	//binOut << nrOfCPs << endl;
-//	//for (int i = 0; i < nrOfCPs; i++) {
-//	//	binOut << fbuff[i].x << " " << fbuff[i].y << " " << fbuff[i].z << endl;
-//	//}
-//	//binOut.close();
-//
-//	////BinaryConvert("xBin.bin");
-//
-//	//delete[] fbuff;
-//	delete[] farr;
+//	//binFile.close();
+//	//delete[] farr;
 //
 //	return pString;
 //}
@@ -354,6 +331,16 @@ string PrintPolygons(FbxMesh* pMesh)
 						break; // other reference modes not shown here!
 					}
 
+				}
+				// MM: This one is used for spheres and planes, as they previously did not output normals
+				if (leNormal->GetMappingMode() == FbxGeometryElement::eByControlPoint)
+				{
+					if (leNormal->GetReferenceMode() == FbxGeometryElement::eDirect) {
+						pString += Print3DVector(header, leNormal->GetDirectArray().GetAt(i));
+						vertices[vertexId].norm[0] = leNormal->GetDirectArray().GetAt(vertexId)[0];
+						vertices[vertexId].norm[1] = leNormal->GetDirectArray().GetAt(vertexId)[1];
+						vertices[vertexId].norm[2] = leNormal->GetDirectArray().GetAt(vertexId)[2];
+					}
 				}
 
 			}
