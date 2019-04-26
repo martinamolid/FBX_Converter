@@ -1,9 +1,7 @@
 #include "PrintMesh.h"
 
 #include "Filenames.h"
-
 #include "PrintMaterial.h"
-#include "PrintTexture.h"
 
 #include <iostream>
 #include <fstream>
@@ -11,10 +9,32 @@ using namespace std;
 
 //#define MAT_HEADER_LENGTH 200
 
-//void BinaryConvert(string name);
+/*
+========================================================================================================================
 
-string PrintControlsPoints(FbxMesh* pMesh);
-string PrintPolygons(FbxMesh* pMesh);
+	PrintMesh calls all the functions to print the mesh's information, right now it gets the mesh's name (which it sends to PrintPolygons), 
+		as well as calls PrintPolygons and PrintMaterial.
+
+	PrintPolygons prints the mesh's information, including mesh name, nr of materials, nr of vertices and vertex data (position, uv, normals, tangents and binormals),
+		and calls PrintMaterials to print materials and textures.
+
+	PrintControlPoints works as a testing ground, as it's not used any longer. (It prints the vertices positions, while PrintPolygons builds the faces and prints)
+
+	Returning the pString, or the ASCII information string from these functions is important, as the information string will be collected back into main
+		where it will be printed to the ASCII file. (This only requires the ASCII file to be opened once)
+		This is why most Print-- versions of the functions return strings.
+
+
+	Some unused code from the original DisplayMesh function is left here as a reference, in case it will be used later in the project.
+
+	// Martina Molid
+
+========================================================================================================================
+*/
+
+// MM: The outcommented functions are not used right now, but may be needed at a later point.
+//string PrintControlsPoints(FbxMesh* pMesh);
+string PrintPolygons(FbxMesh* pMesh, string meshName);
 //string PrintMaterialMapping(FbxMesh* pMesh);
 //void PrintTextureMapping(FbxMesh* pMesh);
 //void PrintTextureNames(FbxProperty &pProperty, FbxString& pConnectionString);
@@ -33,40 +53,16 @@ string PrintMesh(FbxNode* pNode) {
 	FbxMesh* pMesh = (FbxMesh*)pNode->GetNodeAttribute();
 	string pString;
 
-	//string name = (char *)pNode->GetName();
-	//pString += "Mesh: " + name + "\n";
+	string name = (char *)pNode->GetName();		// MM: We have to get the mesh name here, then we pass it to PrintPolygons to be printed there instead of opening the binFile here too.
+
 	///pString += PrintControlsPoints(pMesh);
-	pString += PrintPolygons(pMesh);
+	pString += PrintPolygons(pMesh, name);
 	pString += "\n";
-	///pString += PrintMaterialMapping(pMesh);
-	pString += PrintMaterial(pMesh);
-	pString += "\n";
-	//pString += PrintTexture(pMesh);
+	pString += PrintMaterial(pMesh);		// MM: Textures are called to be printed from PrintMaterial
 	pString += "\n";
 
 	return pString;
 }
-
-//void BinaryConvert(string name) {
-//
-//	ifstream binIn(name, ifstream::binary);
-//	int nrOfVertices = 0;
-//	binIn.read((char*)&nrOfVertices, sizeof(int));
-//	Vertex* vtxBuff = new Vertex[nrOfVertices];
-//	binIn.read((char*)vtxBuff, sizeof(Vertex)*nrOfVertices);
-//	binIn.close();
-//
-//	ofstream binOut("xBinOut.txt", ofstream::out);
-//	binOut << nrOfVertices << endl;
-//	for (int i = 0; i < nrOfVertices; i++) {
-//		binOut << vtxBuff[i].x << " " << vtxBuff[i].y << " " << vtxBuff[i].z << endl;
-//		binOut << vtxBuff[i].u << " " << vtxBuff[i].v << endl;
-//		binOut << vtxBuff[i].nx << " " << vtxBuff[i].ny << " " << vtxBuff[i].nz << endl;
-//	}
-//	binOut.close();
-//
-//	delete[] vtxBuff;
-//}
 
 //string PrintControlsPoints(FbxMesh* pMesh)
 //{
@@ -122,42 +118,47 @@ string PrintMesh(FbxNode* pNode) {
 //	return pString;
 //}
 
-string PrintPolygons(FbxMesh* pMesh)
+string PrintPolygons(FbxMesh* pMesh, string meshName)
 {
-	string pString;
-
 	int i, j, lPolygonCount = pMesh->GetPolygonCount();
 	FbxVector4* lControlPoints = pMesh->GetControlPoints();
 	char header[100];
 
-	//FbxMesh* parent = pMesh->GetDstObject();
-	//MM This entire parent name part is a train wreck, needs more testing with a FBX with actual hierarchies
-	/*if (parent != NULL) {
-		string parentName = (char*)pMesh->GetDstObject()->GetName();
-		if (parentName != "") {
-			pString += "Parent Name: " + parentName + "\n";
-		}
-	}*/
+	// MM: Defines pString to print ASCII info into, and opens the binary file in binary append mode
+	string pString;
+	ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
 
-	ofstream binVtxFile(BINARY_FILE, ofstream::binary | ofstream::app);
+	// --- MM: Getting, formatting and printing name --- 
+	int nameLength = strlen(meshName.c_str());
+	char finalMeshName[NAME_SIZE];
+	for (int i = 0; i < nameLength; i++) {
+		finalMeshName[i] = meshName[i];
+	}
+	finalMeshName[nameLength] = '\0'; // Puts a \0 at the end of the mesh name, still printing out whitespace into the binary file
+	
+	cout << "Mesh name: " << finalMeshName << endl;
+	pString += "Mesh name: " + meshName + "\n";
+	binFile.write((char*)finalMeshName, sizeof(char) * NAME_SIZE);
 
+	// --- MM: Printing Material Count for the mesh ---
 	int nrOfMat = pMesh->GetElementMaterialCount();
 	//cout << "Material Count in PrintPolygons: " << nrOfMat << endl;
 	pString += "mat count " + to_string(nrOfMat) + "\n";
-	binVtxFile.write((char*)&nrOfMat, sizeof(int));
+	binFile.write((char*)&nrOfMat, sizeof(int));
 
+	// --- MM: Getting and priting Vertex Count for the mesh ---
 	int vtxCount = pMesh->GetPolygonVertexCount();
 	pString += "vtx count " + to_string(vtxCount) + "\n";
-	binVtxFile.write((char*)&vtxCount, sizeof(int));
+	binFile.write((char*)&vtxCount, sizeof(int));
 
+	// --- MM: Allocating memory for the vertices array based on the vertex count ---
 	Vertex *vertices = new Vertex[vtxCount];
 
+	// MM: Builds vertices for each polygon, and adds to the vertices array we allocated memory for
 	int vertexId = 0;
 	for (i = 0; i < lPolygonCount; i++)
 	{
-		//pString += "        Polygon " + to_string(i) + "\n";
 		int l;
-
 		for (l = 0; l < pMesh->GetElementPolygonGroupCount(); l++)
 		{
 			FbxGeometryElementPolygonGroup* lePolgrp = pMesh->GetElementPolygonGroup(l);
@@ -190,6 +191,7 @@ string PrintPolygons(FbxMesh* pMesh)
 			}
 			else
 			{
+				// MM: Prints and adds -vertex positions- to the pString and to the vertices array
 				pString += Print3DVector("v ", lControlPoints[lControlPointIndex]);
 				vertices[vertexId].pos[0] = lControlPoints[lControlPointIndex][0];
 				vertices[vertexId].pos[1] = lControlPoints[lControlPointIndex][1];
@@ -252,7 +254,7 @@ string PrintPolygons(FbxMesh* pMesh)
 			{
 				FbxGeometryElementUV* leUV = pMesh->GetElementUV(l);
 				FBXSDK_sprintf(header, 100, "vt ");
-
+				// MM: Prints and adds -UV positions- to the pString and to the vertices array
 				switch (leUV->GetMappingMode())
 				{
 				default:
@@ -307,7 +309,7 @@ string PrintPolygons(FbxMesh* pMesh)
 			{
 				FbxGeometryElementNormal* leNormal = pMesh->GetElementNormal(l);
 				FBXSDK_sprintf(header, 100, "vn ");
-
+				// MM: Prints and adds -normal positions- to the pString and to the vertices array
 				if (leNormal->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 				{
 					switch (leNormal->GetReferenceMode())
@@ -348,7 +350,7 @@ string PrintPolygons(FbxMesh* pMesh)
 			{
 				FbxGeometryElementTangent* leTangent = pMesh->GetElementTangent(l);
 				FBXSDK_sprintf(header, 100, "vtan ");
-
+				// MM: Prints and adds -tangents- to the pString and to the vertices array
 				if (leTangent->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 				{
 					switch (leTangent->GetReferenceMode())
@@ -378,8 +380,8 @@ string PrintPolygons(FbxMesh* pMesh)
 			{
 
 				FbxGeometryElementBinormal* leBinormal = pMesh->GetElementBinormal(l);
-
 				FBXSDK_sprintf(header, 100, "vbin ");
+				// MM: Prints and adds -binormals- to the pString and to the vertices array
 				if (leBinormal->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 				{
 					switch (leBinormal->GetReferenceMode())
@@ -408,10 +410,12 @@ string PrintPolygons(FbxMesh* pMesh)
 		} // for polygonSize
 	} // for polygonCount
 
-	binVtxFile.write((char*)vertices, sizeof(Vertex)*vtxCount);
+	// MM: Write the vertices to the binary file
+	binFile.write((char*)vertices, sizeof(Vertex)*vtxCount);
+	// MM: Delete the allocated memory for vertices
 	delete[] vertices;
-	///BinaryConvert("xBinVtx.bin");
-	binVtxFile.close();
+	// MM: Close the binary file
+	binFile.close();
 	return pString;
 }
 

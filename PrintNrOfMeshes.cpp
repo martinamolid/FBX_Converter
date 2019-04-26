@@ -59,8 +59,9 @@ string PrintNrOfMeshes(FbxScene* pScene)
 	string pString;
 	int nrOfMeshes = 0;
 
+	// MM: Opens the binary file in binary mode. As this is the first time something it written to the binary file, this will wipe the existing file.
 	ofstream binFile(BINARY_FILE, ofstream::binary);
-	//int meshes = lRootNode->GetChildCount();
+
 	for (i = 0; i < lRootNode->GetChildCount(); i++)
 	{
 		nrOfMeshes += PrintNrOfMeshes(lRootNode->GetChild(i), 0);

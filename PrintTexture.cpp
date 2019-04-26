@@ -27,7 +27,6 @@ string PrintTextureInfo(FbxTexture* pTexture, int pBlendMode)
 
 		string tempFileName = fullFileName.substr(lastSpace+1, (ffnLength - lastSpace));
 		int fileNameLength = strlen(tempFileName.c_str());
-		pString += PrintString("            File Name: \"", tempFileName.c_str(), "\"");
 
 		char fileName[NAME_SIZE];
 		for (int i = 0; i < fileNameLength; i++) {
@@ -35,8 +34,8 @@ string PrintTextureInfo(FbxTexture* pTexture, int pBlendMode)
 		}
 		fileName[fileNameLength] = '\0';
 		cout << "Filename: " << fileName << endl;
+		pString += PrintString("            File Name: \"", fileName, "\"");
 		binFile.write((char*)fileName, sizeof(char) * NAME_SIZE);
-		//char* fileName = strtok(fullFileName.c_str(), "/");
 	}
 	else if (lProceduralTexture)
 	{
@@ -96,7 +95,7 @@ string PrintTextureInfo(FbxTexture* pTexture, int pBlendMode)
 	return pString;
 }
 
-string FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplayHeader, int pMaterialIndex) {
+string FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplayHeader, int pMaterialIndex, int currentTexture) {
 
 	string pString;
 	if (pProperty.IsValid())
@@ -105,7 +104,7 @@ string FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplay
 
 		//cout << "Number of textures in PrintTexture: " << lTextureCount << endl;
 
-		ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
+		//ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
 
 		for (int j = 0; j < lTextureCount; ++j)
 		{
@@ -145,40 +144,46 @@ string FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplay
 				FbxTexture* lTexture = pProperty.GetSrcObject<FbxTexture>(j);
 				if (lTexture)
 				{
+					ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
 					//display connected Material header only at the first time
-					if (pDisplayHeader) {
+					//if (pDisplayHeader) {
 						//cout << "Number of textures in PrintTexture: " << lTextureCount << endl;
 						//pString += PrintInt("Nr of Textures in Material: ", lTextureCount);
+						cout << "TEXTURE TO MAT: " << pMaterialIndex << endl;
 						pString += PrintInt("    Textures connected to Material ", pMaterialIndex);
 						binFile.write((char*)&pMaterialIndex, sizeof(int));
 						pDisplayHeader = false;
-					}
+					//}
 
 					//pString += PrintString("    Textures for ", pProperty.GetName());
-					pString += PrintInt("        Texture ", j);
-					binFile.write((char*)&j, sizeof(int));
+					//	cout << "Texture no: " << j << endl;
+					//pString += PrintInt("        Texture ", j);
+					//binFile.write((char*)&j, sizeof(int));
+					binFile.close();
 					pString += PrintTextureInfo(lTexture, -1);
 				}
 			}
 		}
-		binFile.close();
+		//binFile.close();
 	}//end if pProperty
 	return pString;
 }
 
 
-string PrintTexture(FbxGeometry* pGeometry)
+string PrintTexture(FbxSurfaceMaterial *lMaterial, int lMaterialIndex) //FbxGeometry* pGeometry
 {
-	int lMaterialIndex;
+	//int lMaterialIndex;
 	FbxProperty lProperty;
-	if (pGeometry->GetNode() == NULL)
-		return "";
-	int lNbMat = pGeometry->GetNode()->GetSrcObjectCount<FbxSurfaceMaterial>();
+	//if (pGeometry->GetNode() == NULL)
+		//return "";
+	//int lNbMat = pGeometry->GetNode()->GetSrcObjectCount<FbxSurfaceMaterial>();
 
 	string pString;
 
-	for (lMaterialIndex = 0; lMaterialIndex < lNbMat; lMaterialIndex++) {
-		FbxSurfaceMaterial *lMaterial = pGeometry->GetNode()->GetSrcObject<FbxSurfaceMaterial>(lMaterialIndex);
+	int nrOfTextures = 0;
+
+	//for (lMaterialIndex = 0; lMaterialIndex < lNbMat; lMaterialIndex++) {
+		//FbxSurfaceMaterial *lMaterial = pGeometry->GetNode()->GetSrcObject<FbxSurfaceMaterial>(lMaterialIndex);
 		bool lDisplayHeader = true;
 
 		//go through all the possible textures
@@ -188,11 +193,16 @@ string PrintTexture(FbxGeometry* pGeometry)
 			FBXSDK_FOR_EACH_TEXTURE(lTextureIndex)
 			{
 				lProperty = lMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[lTextureIndex]);
-				pString += FindAndDisplayTextureInfoByProperty(lProperty, lDisplayHeader, lMaterialIndex);
+				if (lProperty.IsValid())
+				{
+					//nrOfTextures++;
+					//cout << nrOfTextures << endl;
+					pString += FindAndDisplayTextureInfoByProperty(lProperty, lDisplayHeader, lMaterialIndex, nrOfTextures);
+				}
 			}
 
 		}//end if(lMaterial)
 
-	}// end for lMaterialIndex     
+	//}// end for lMaterialIndex     
 	return pString;
 }

@@ -19,23 +19,37 @@
 //
 /////////////////////////////////////////////////////////////////////////
 
+/*
+========================================================================================================================
+
+	This is the main file of the FBX to Custom Binary Converter for Group 3 in UD1446: Small Game Project
+
+	To decide the filenames for output, see Filenames.h
+
+	**PLEASE, DO NOT REMOVE OUT-COMMENTED CODE UNLESS YOU ARE 120% SURE IT WILL NOT USE IT IN THE FUTURE**
+
+	// Martina Molid
+
+========================================================================================================================
+*/
+
 #include "../Common/Common.h"
-#include "DisplayCommon.h"
-#include "DisplayHierarchy.h"
-#include "DisplayAnimation.h"
-#include "DisplayMarker.h"
-#include "DisplaySkeleton.h"
-#include "DisplayMesh.h"
-#include "DisplayNurb.h"
-#include "DisplayPatch.h"
-#include "DisplayLodGroup.h"
-#include "DisplayCamera.h"
-#include "DisplayLight.h"
-#include "DisplayGlobalSettings.h"
-#include "DisplayPose.h"
-#include "DisplayPivotsAndLimits.h"
-#include "DisplayUserProperties.h"
-#include "DisplayGenericInfo.h"
+//#include "DisplayCommon.h"
+//#include "DisplayHierarchy.h"
+//#include "DisplayAnimation.h"
+//#include "DisplayMarker.h"
+//#include "DisplaySkeleton.h"
+//#include "DisplayMesh.h"
+//#include "DisplayNurb.h"
+//#include "DisplayPatch.h"
+//#include "DisplayLodGroup.h"
+//#include "DisplayCamera.h"
+//#include "DisplayLight.h"
+//#include "DisplayGlobalSettings.h"
+//#include "DisplayPose.h"
+//#include "DisplayPivotsAndLimits.h"
+//#include "DisplayUserProperties.h"
+//#include "DisplayGenericInfo.h"
 
 #include "Filenames.h"
 
@@ -66,33 +80,37 @@ int main(int argc, char** argv)
     FbxScene* lScene = NULL;
     bool lResult;
 
-	ofstream file;
-	file.open(ASCII_FILE);	// MM: Change this to a filename of choice and right filetype later
-
     // Prepare the FBX SDK.
     InitializeSdkObjects(lSdkManager, lScene);
     // Load the scene.
-
-    // The example can take a FBX file as an argument.
+	
+	// MM: This opens the .fbx file to be read from
 	FbxString lFilePath("");
-	//for( int i = 1, c = argc; i < c; ++i )
-	//{
-	//	if( FbxString(argv[i]) == "-test" ) gVerbose = false;
-	//	else if( lFilePath.IsEmpty() ) lFilePath = argv[i];
-	//}
 
 	if( lFilePath.IsEmpty() )
 	{
 		lFilePath = IN_FBX_FILEPATH.c_str();
 		lResult = LoadScene(lSdkManager, lScene, lFilePath.Buffer());
         //lResult = false;
-        //FBXSDK_printf("\n\nUsage: ImportScene <FBX file name>\n\n");
 	}
-	//else
-	//{
-	//	FBXSDK_printf("\n\nFile: %s\n\n", lFilePath.Buffer());
-	//	lResult = LoadScene(lSdkManager, lScene, lFilePath.Buffer());
-	//}
+
+	ofstream asciiFile;
+	asciiFile.open(ASCII_FILE);	// MM: Opens the ASCII file to write the ASCII strings to
+
+	/*
+	========================================================================================================================
+		
+		This is where main calls all major printing functions.
+
+		All void Display-- functions are part of the original FBX SDK, while the string Print-- functions are re-worked versions of the Display-- functions,
+			which returns a string with the information into the ASCII file and prints binary into the binary file.
+
+		The out-commented things below are leftovers from the FBX SDK, but is a good guide as to where you might want to implement upcoming things.
+
+		// Martina Molid
+		
+	========================================================================================================================
+	*/
 
     if(lResult == false)
     {
@@ -117,11 +135,11 @@ int main(int argc, char** argv)
 
         //FBXSDK_printf("\n\n---------\nHierarchy\n---------\n\n");
 
-		if (gVerbose) file << PrintNrOfMeshes(lScene);//PrintHierarchy(lScene);
+		if (gVerbose) asciiFile << PrintNrOfMeshes(lScene);//PrintHierarchy(lScene); // MM: Prints how many meshes exists in the FBX file
 
         //FBXSDK_printf("\n\n------------\nNode Content\n------------\n\n");
 
-        if( gVerbose ) file << PrintContent(lScene);
+        if( gVerbose ) asciiFile << PrintContent(lScene);	// MM: Prints node content, currently only meshes ( see below )
 
         //FBXSDK_printf("\n\n----\nPose\n----\n\n");
 
@@ -142,11 +160,22 @@ int main(int argc, char** argv)
     // Destroy all objects created by the FBX SDK.
     DestroySdkObjects(lSdkManager, lResult);
 
-	file.close();
+	asciiFile.close();
 	system("pause");
     return 0;
 }
 
+/* 
+========================================================================================================================
+
+	PrintContent recursively prints all information in a node (and its children), determined by the type of the node.
+	For now, only meshes are printed out, but all original code from the FBX SDK is left in here as a reference
+		to how and where they print skeletons and lights.
+
+	// Martina Molid
+
+========================================================================================================================
+*/
 string PrintContent(FbxScene* pScene)
 {
     int i;
@@ -239,7 +268,7 @@ void DisplayTarget(FbxNode* pNode)
 {
     if(pNode->GetTarget() != NULL)
     {
-        DisplayString("    Target Name: ", (char *) pNode->GetTarget()->GetName());
+        //DisplayString("    Target Name: ", (char *) pNode->GetTarget()->GetName());
     }
 }
 
@@ -310,6 +339,17 @@ void DisplayTransformPropagation(FbxNode* pNode)
     }
 }
 
+
+/*
+========================================================================================================================
+
+	DisplayGeometricTransform is what we would want to use to get the transformations of a mesh, 
+		have not yet reconstructed this as a Print-- function
+
+	// Martina Molid
+
+========================================================================================================================
+*/
 void DisplayGeometricTransform(FbxNode* pNode)
 {
     FbxVector4 lTmpVector;
@@ -336,6 +376,15 @@ void DisplayGeometricTransform(FbxNode* pNode)
 }
 
 
+/*
+========================================================================================================================
+
+	DisplayMetaData has been printing empty in all the test runs of the original FBX SDK, it might not be useful to us.
+
+	// Martina Molid
+
+========================================================================================================================
+*/
 void DisplayMetaData(FbxScene* pScene)
 {
     FbxDocumentInfo* sceneInfo = pScene->GetSceneInfo();

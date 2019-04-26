@@ -3,6 +3,7 @@
 
 #include "Filenames.h"
 #include "PrintMaterial.h"
+#include "PrintTexture.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,7 +28,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 	int lMaterialCount = 0;
 	FbxNode* lNode = NULL;
 
-	ofstream binFile (BINARY_FILE, ofstream::binary | ofstream::app);
+	//ofstream binFile (BINARY_FILE, ofstream::binary | ofstream::app);
 
 	PhongMaterial *materials = nullptr;
 	string pString;
@@ -53,6 +54,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 
 		for (int lCount = 0; lCount < lMaterialCount; lCount++)
 		{
+			ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
 			pString += PrintInt("        Material ", lCount);
 			// MM: Printing the material index
 			binFile.write((char*)&lCount, sizeof(int));
@@ -273,7 +275,8 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				// -- GETTING THE NUMBER OF TEXTURES FOR THE MATERIAL --
 				FbxProperty lProperty;
 				int lTextureCount = 0;
-				bool hasPrinted = false;
+				//bool hasPrinted = false;
+				int nrOfTextures = 0;
 				//int run = 0;
 				int lTextureIndex;
 				FBXSDK_FOR_EACH_TEXTURE(lTextureIndex)
@@ -285,24 +288,24 @@ string PrintMaterial(FbxGeometry* pGeometry)
 						FbxTexture* lTexture = lProperty.GetSrcObject<FbxTexture>(j);
 						if (lTexture)
 						{
-							cout << "TEXTURE COUNT: " << lTextureCount << endl;
-							pString += "            Nr of Textures: " + to_string(lTextureCount) +"\n";
-							materials[lCount].nrOfTextures = lTextureCount;
-							hasPrinted = true;
+							nrOfTextures++;
+							//hasPrinted = true;
 						}	
 					}
 				}
-				// MM: If there are no textures, this is a fail safe printing out that there are no textures
-				if (hasPrinted == false) {
-					cout << "TEXTURE COUNT: " << 0 << endl;
-					pString += "            Nr of Textures: " + to_string(0) + "\n";
-					materials[lCount].nrOfTextures = 0;
-					hasPrinted = true;
-				}
 				//cout << "Run: " << run << endl;
+
+				cout << "TEXTURE COUNT: " << nrOfTextures << endl;
+				pString += "            Nr of Textures: " + to_string(nrOfTextures) + "\n";
+				materials[lCount].nrOfTextures = nrOfTextures;
 
 				// -- Writing the material to the binary file
 				binFile.write((char*)&materials[lCount], sizeof(PhongMaterial));
+				// MM: File has to be closed here as it is reopened in PrintTexture
+				binFile.close();
+				// --------------- CALL PRINTTEXTURE HERE ------------------
+				pString += PrintTexture(lMaterial, lCount);
+
 			}
 			else if (lMaterial->GetClassId().Is(FbxSurfaceLambert::ClassId))
 			{
@@ -353,7 +356,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 	if (materials != nullptr) {
 		delete[] materials;
 	}
-	binFile.close();
+	//binFile.close();
 	return pString;
 }
 
