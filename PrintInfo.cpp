@@ -1,5 +1,18 @@
 #include "PrintInfo.h"
 
+/*
+========================================================================================================================
+
+	PrintInfo is based off DisplayCommon, and is mainly just used to make printing information from the original FBX SDK simpler.
+		We might not need it later if we would desire to completely eradicate it, but we would have to rewrite how we print information.
+
+	The vector printing functions, however, are quite useful.
+
+	// Martina Molid
+
+========================================================================================================================
+*/
+
 
 string PrintString(const char* pHeader, const char* pValue /* = "" */, const char* pSuffix /* = "" */)
 {

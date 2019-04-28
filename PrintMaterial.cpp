@@ -9,6 +9,23 @@
 #include <fstream>
 using namespace std;
 
+/*
+========================================================================================================================
+
+	PrintMaterial prints out the material information per mesh. 
+	For each material connected to the mesh, the function prints material index, material name and the Phong attributes, nr of textures for the material.
+
+	At the end of the loop, calls PrintTexture to print all the textures related to this material.
+	
+	Currently only supports Phong materials, but code for Lambert is left in case it would be desired.
+	
+	Material count is printed in PrintMesh->PrintPolygons instead of here in order to print at the top of the mesh.
+
+	// Martina Molid
+
+========================================================================================================================
+*/
+
 struct PhongMaterial {
 	float ambient[3];
 	float diffuse[3];
@@ -20,15 +37,10 @@ struct PhongMaterial {
 	int nrOfTextures;
 };
 
-// RESTRUCTURE ENTIRE PHONG MATERIAL WRITING PROCESS TO WRITE TO FILE ONCE
-// EDIT: Check this with Ossian to make sure everything works
-
 string PrintMaterial(FbxGeometry* pGeometry)
 {
 	int lMaterialCount = 0;
 	FbxNode* lNode = NULL;
-
-	//ofstream binFile (BINARY_FILE, ofstream::binary | ofstream::app);
 
 	PhongMaterial *materials = nullptr;
 	string pString;
@@ -41,6 +53,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 			/// MM: Printing how many materials exist for the mesh
 			///binFile.write((char*)&lMaterialCount, sizeof(int));
 			// MM: material count is printed in PrintMesh->PrintPolygons instead of here in order to print at the top of the mesh
+			// MM: Allocates memory for the materials array, based on how many materials are to be read
 			materials = new PhongMaterial[lMaterialCount];
 		}
 			
@@ -54,6 +67,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 
 		for (int lCount = 0; lCount < lMaterialCount; lCount++)
 		{
+			// MM: Binary file has to be opened inside the for-loop to make everything print correctly when we call PrintTexture later
 			ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
 			pString += PrintInt("        Material ", lCount);
 			// MM: Printing the material index
@@ -224,7 +238,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 			{
 				// We found a Phong material.  Display its properties.
 
-				// Display the Ambient Color
+				// Print the Ambient Color
 				lKFbxDouble3 = ((FbxSurfacePhong *)lMaterial)->Ambient;
 				theColor.Set(lKFbxDouble3.Get()[0], lKFbxDouble3.Get()[1], lKFbxDouble3.Get()[2]);
 				pString += PrintColor("            Ambient: ", theColor);
@@ -232,7 +246,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				materials[lCount].ambient[1] = (float)lKFbxDouble3.Get()[1];
 				materials[lCount].ambient[2] = (float)lKFbxDouble3.Get()[2];
 
-				// Display the Diffuse Color
+				// Print the Diffuse Color
 				lKFbxDouble3 = ((FbxSurfacePhong *)lMaterial)->Diffuse;
 				theColor.Set(lKFbxDouble3.Get()[0], lKFbxDouble3.Get()[1], lKFbxDouble3.Get()[2]);
 				pString += PrintColor("            Diffuse: ", theColor);
@@ -240,7 +254,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				materials[lCount].diffuse[1] = (float)lKFbxDouble3.Get()[1];
 				materials[lCount].diffuse[2] = (float)lKFbxDouble3.Get()[2];
 
-				// Display the Specular Color (unique to Phong materials)
+				// Print the Specular Color (unique to Phong materials)
 				lKFbxDouble3 = ((FbxSurfacePhong *)lMaterial)->Specular;
 				theColor.Set(lKFbxDouble3.Get()[0], lKFbxDouble3.Get()[1], lKFbxDouble3.Get()[2]);
 				pString += PrintColor("            Specular: ", theColor);
@@ -248,7 +262,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				materials[lCount].specular[1] = (float)lKFbxDouble3.Get()[1];
 				materials[lCount].specular[2] = (float)lKFbxDouble3.Get()[2];
 
-				// Display the Emissive Color
+				// Print the Emissive Color
 				lKFbxDouble3 = ((FbxSurfacePhong *)lMaterial)->Emissive;
 				theColor.Set(lKFbxDouble3.Get()[0], lKFbxDouble3.Get()[1], lKFbxDouble3.Get()[2]);
 				pString += PrintColor("            Emissive: ", theColor);
@@ -261,12 +275,12 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				pString += PrintDouble("            Opacity: ", 1.0 - lKFbxDouble1.Get());
 				materials[lCount].opacity = (float)lKFbxDouble1.Get();
 
-				// Display the Shininess
+				// Print the Shininess
 				lKFbxDouble1 = ((FbxSurfacePhong *)lMaterial)->Shininess;
 				pString += PrintDouble("            Shininess: ", lKFbxDouble1.Get());
 				materials[lCount].shininess = (float)lKFbxDouble1.Get();
 
-				// Display the Reflectivity
+				// Print the Reflectivity
 				lKFbxDouble1 = ((FbxSurfacePhong *)lMaterial)->ReflectionFactor;
 				pString += PrintDouble("            Reflectivity: ", lKFbxDouble1.Get());
 				materials[lCount].reflectivity = (float)lKFbxDouble1.Get();
@@ -275,7 +289,6 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				// -- GETTING THE NUMBER OF TEXTURES FOR THE MATERIAL --
 				FbxProperty lProperty;
 				int lTextureCount = 0;
-				//bool hasPrinted = false;
 				int nrOfTextures = 0;
 				//int run = 0;
 				int lTextureIndex;
@@ -289,13 +302,11 @@ string PrintMaterial(FbxGeometry* pGeometry)
 						if (lTexture)
 						{
 							nrOfTextures++;
-							//hasPrinted = true;
 						}	
 					}
 				}
 				//cout << "Run: " << run << endl;
 
-				cout << "TEXTURE COUNT: " << nrOfTextures << endl;
 				pString += "            Nr of Textures: " + to_string(nrOfTextures) + "\n";
 				materials[lCount].nrOfTextures = nrOfTextures;
 
@@ -303,7 +314,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 				binFile.write((char*)&materials[lCount], sizeof(PhongMaterial));
 				// MM: File has to be closed here as it is reopened in PrintTexture
 				binFile.close();
-				// --------------- CALL PRINTTEXTURE HERE ------------------
+				// MM: PrintTexture is called here, printing out texture information for all textures per material
 				pString += PrintTexture(lMaterial, lCount);
 
 			}
@@ -346,8 +357,10 @@ string PrintMaterial(FbxGeometry* pGeometry)
 			else
 				pString += PrintString("Unknown type of Material");
 
-			FbxPropertyT<FbxString> lString;
-			lString = lMaterial->ShadingModel;
+
+			// MM: Use this (but move it further up) if we want to know which shading model to use
+			//FbxPropertyT<FbxString> lString;
+			//lString = lMaterial->ShadingModel;
 			//pString += PrintString("            Shading Model: ", lString.Get().Buffer());
 			//pString += PrintString("");
 		}
@@ -356,7 +369,7 @@ string PrintMaterial(FbxGeometry* pGeometry)
 	if (materials != nullptr) {
 		delete[] materials;
 	}
-	//binFile.close();
+
 	return pString;
 }
 

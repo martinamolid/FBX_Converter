@@ -7,6 +7,22 @@
 #include <iostream>
 using namespace std;
 
+/*
+========================================================================================================================
+
+	PrintNrOfMeshes prints the number of meshes at the very top of the file. 
+		This is currently the first function called, which also wipes the previously existing file.
+
+	These functions are based of the Hierarchy functions, which have been left in here (as we probably want to use them later), 
+		to go through the hierarchies and count number of meshes.
+
+	PrintHierarchy will most likely be needed later, leave it be for now.
+
+	// Martina Molid
+
+========================================================================================================================
+*/
+
 //string PrintHierarchy(FbxNode* pNode, int pDepth);
 
 //string PrintHierarchy(FbxScene* pScene)

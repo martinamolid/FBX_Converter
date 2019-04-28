@@ -6,6 +6,22 @@
 #include <iostream>
 #include <fstream>
 
+/*
+========================================================================================================================
+
+	PrintTexture goes through all textures per material and prints the index of the material it belongs to, and the file name.
+		This can be evolved as we see fit. 
+
+	Currently, we cannot print out the texture index, as it always prints 0 no matter which texture we are at.
+
+	There are a lot of outcommented code in these functions, but a lot might be useful if we need more informations for the textures. Please don't delete.
+	There is also code for layered textures, but it is not implemented for our files right now.
+
+	// Martina Molid
+
+========================================================================================================================
+*/
+
 
 string PrintTextureInfo(FbxTexture* pTexture, int pBlendMode)
 {
@@ -23,8 +39,8 @@ string PrintTextureInfo(FbxTexture* pTexture, int pBlendMode)
 		string fullFileName = lFileTexture->GetFileName();
 		int ffnLength = strlen(fullFileName.c_str());
 		int lastSpace = fullFileName.find_last_of("/");
-		//cout << lastSpace << endl;
 
+		// MM: In case you would like to add a specific folder for textures, add the folder filepath to the filename below. (See FIlenames.h for example)
 		string tempFileName = fullFileName.substr(lastSpace+1, (ffnLength - lastSpace));
 		int fileNameLength = strlen(tempFileName.c_str());
 
@@ -33,7 +49,6 @@ string PrintTextureInfo(FbxTexture* pTexture, int pBlendMode)
 			fileName[i] = tempFileName[i];
 		}
 		fileName[fileNameLength] = '\0';
-		cout << "Filename: " << fileName << endl;
 		pString += PrintString("            File Name: \"", fileName, "\"");
 		binFile.write((char*)fileName, sizeof(char) * NAME_SIZE);
 	}
@@ -104,8 +119,6 @@ string FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplay
 
 		//cout << "Number of textures in PrintTexture: " << lTextureCount << endl;
 
-		//ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
-
 		for (int j = 0; j < lTextureCount; ++j)
 		{
 			//Here we have to check if it's layeredtextures, or just textures:
@@ -144,27 +157,31 @@ string FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplay
 				FbxTexture* lTexture = pProperty.GetSrcObject<FbxTexture>(j);
 				if (lTexture)
 				{
+					// MM: Binary file has to be opened here as it will be opened in PrintTextureInfo, in order to get the order to print right
 					ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
-					//display connected Material header only at the first time
+
+					//display connected Material header only at the first time // MM: This is deactivated for now, to print the material index the texture is connected to.
 					//if (pDisplayHeader) {
-						//cout << "Number of textures in PrintTexture: " << lTextureCount << endl;
-						//pString += PrintInt("Nr of Textures in Material: ", lTextureCount);
-						cout << "TEXTURE TO MAT: " << pMaterialIndex << endl;
-						pString += PrintInt("    Textures connected to Material ", pMaterialIndex);
-						binFile.write((char*)&pMaterialIndex, sizeof(int));
-						pDisplayHeader = false;
+						// MM: Number of textures is printed inside PrintMaterial instead of here.
+					pString += PrintInt("    Textures connected to Material ", pMaterialIndex);
+					binFile.write((char*)&pMaterialIndex, sizeof(int));
+					//pDisplayHeader = false;
 					//}
 
 					//pString += PrintString("    Textures for ", pProperty.GetName());
-					//	cout << "Texture no: " << j << endl;
+
+					// MM: Printing out texture index gets messed up here as it wil always print 0, no matter which texture it is
+					//		Therefore, for now, we don't print texture index as it is not needed, we can compare texture names, and the textures still have the its material's id
+					//cout << "Texture no: " << j << endl;
 					//pString += PrintInt("        Texture ", j);
 					//binFile.write((char*)&j, sizeof(int));
+
+					// MM: Binary file has to be closed here as it will be opened in PrintTextureInfo, in order to get the order to print right
 					binFile.close();
 					pString += PrintTextureInfo(lTexture, -1);
 				}
 			}
 		}
-		//binFile.close();
 	}//end if pProperty
 	return pString;
 }
@@ -195,8 +212,6 @@ string PrintTexture(FbxSurfaceMaterial *lMaterial, int lMaterialIndex) //FbxGeom
 				lProperty = lMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[lTextureIndex]);
 				if (lProperty.IsValid())
 				{
-					//nrOfTextures++;
-					//cout << nrOfTextures << endl;
 					pString += FindAndDisplayTextureInfoByProperty(lProperty, lDisplayHeader, lMaterialIndex, nrOfTextures);
 				}
 			}

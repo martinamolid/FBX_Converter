@@ -27,6 +27,8 @@ using namespace std;
 
 	Some unused code from the original DisplayMesh function is left here as a reference, in case it will be used later in the project.
 
+	** PLEASE DO NOT REMOVE OUTCOMMENTED CODE UNLESS YOU ARE SURE IT WILL NOT BE USED LATER **
+
 	// Martina Molid
 
 ========================================================================================================================
@@ -128,7 +130,7 @@ string PrintPolygons(FbxMesh* pMesh, string meshName)
 	string pString;
 	ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
 
-	// --- MM: Getting, formatting and printing name --- 
+	// --- MM: Getting, formatting and printing mesh name --- 
 	int nameLength = strlen(meshName.c_str());
 	char finalMeshName[NAME_SIZE];
 	for (int i = 0; i < nameLength; i++) {
