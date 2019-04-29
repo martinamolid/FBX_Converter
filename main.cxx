@@ -35,6 +35,7 @@
 ========================================================================================================================
 */
 
+// MM: The Common.h include has a lot of the FBX SDK defined functions and types like FBXSDK_printf
 #include "../Common/Common.h"
 //#include "DisplayCommon.h"
 //#include "DisplayHierarchy.h"
@@ -57,6 +58,7 @@
 
 #include "PrintMesh.h"
 #include "PrintNrOfMeshes.h"
+#include "PrintLight.h"
 
 #include <iostream>
 #include <fstream>
@@ -71,8 +73,14 @@ string PrintContent(FbxScene* pScene);
 string PrintContent(FbxNode* pNode);
 void DisplayTarget(FbxNode* pNode);
 void DisplayTransformPropagation(FbxNode* pNode);
-void DisplayGeometricTransform(FbxNode* pNode);
+string PrintGeometricTransform(FbxNode* pNode);
 void DisplayMetaData(FbxScene* pScene);
+
+struct GeoTransformations {
+	float translation[3];
+	float rotation[3];
+	float scale[3];
+};
 
 static bool gVerbose = true;
 
@@ -242,6 +250,7 @@ string PrintContent(FbxNode* pNode)
 
         case FbxNodeAttribute::eLight:     
             //DisplayLight(pNode);
+			pString += PrintLight(pNode);
             break;
 
         case FbxNodeAttribute::eLODGroup:
@@ -253,8 +262,8 @@ string PrintContent(FbxNode* pNode)
     /*DisplayUserProperties(pNode);
     DisplayTarget(pNode);
     DisplayPivotsAndLimits(pNode);
-    DisplayTransformPropagation(pNode);
-    DisplayGeometricTransform(pNode);*/
+    DisplayTransformPropagation(pNode);*/
+    pString += PrintGeometricTransform(pNode);
 
     for(i = 0; i < pNode->GetChildCount(); i++)
     {
@@ -345,36 +354,48 @@ void DisplayTransformPropagation(FbxNode* pNode)
 /*
 ========================================================================================================================
 
-	DisplayGeometricTransform is what we would want to use to get the transformations of a mesh, 
-		have not yet reconstructed this as a Print-- function
+	PrintGeometricTransform gets the object's geometric transformations and prints it to the ASCII and binary file.
+		The problem right now is that it has to be called before or after the node printing.
 
 	// Martina Molid
 
 ========================================================================================================================
 */
-void DisplayGeometricTransform(FbxNode* pNode)
+string PrintGeometricTransform(FbxNode* pNode)
 {
     FbxVector4 lTmpVector;
+	GeoTransformations transformation;
+	string pString;
 
-    FBXSDK_printf("    Geometric Transformations\n");
+	ofstream binFile(BINARY_FILE, ofstream::binary | ofstream::app);
 
-    //
+
     // Translation
-    //
     lTmpVector = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
-    FBXSDK_printf("        Translation: %f %f %f\n", lTmpVector[0], lTmpVector[1], lTmpVector[2]);
+	pString += "        Translation: " + to_string(lTmpVector[0]) + " " + to_string(lTmpVector[1]) + " " + to_string(lTmpVector[2]) + "\n";
+	transformation.translation[0] = lTmpVector[0];
+	transformation.translation[1] = lTmpVector[1];
+	transformation.translation[2] = lTmpVector[2];
 
-    //
     // Rotation
-    //
     lTmpVector = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
-    FBXSDK_printf("        Rotation:    %f %f %f\n", lTmpVector[0], lTmpVector[1], lTmpVector[2]);
+	pString += "        Rotation:    " + to_string(lTmpVector[0]) + " " + to_string(lTmpVector[1]) + " " + to_string(lTmpVector[2]) + "\n";
+	transformation.rotation[0] = lTmpVector[0];
+	transformation.rotation[1] = lTmpVector[1];
+	transformation.rotation[2] = lTmpVector[2];
 
-    //
     // Scaling
-    //
     lTmpVector = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-    FBXSDK_printf("        Scaling:     %f %f %f\n", lTmpVector[0], lTmpVector[1], lTmpVector[2]);
+	pString += "        Scaling:     " + to_string(lTmpVector[0]) + " " + to_string(lTmpVector[1]) + " " + to_string(lTmpVector[2]) + "\n";
+	pString += "\n";
+	transformation.scale[0] = lTmpVector[0];
+	transformation.scale[1] = lTmpVector[1];
+	transformation.scale[2] = lTmpVector[2];
+
+	binFile.write((char*)&transformation, sizeof(GeoTransformations));
+
+	binFile.close();
+	return pString;
 }
 
 

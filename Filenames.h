@@ -25,7 +25,7 @@
 
 const std::string ASCII_FILE = "Exported_Files/xTestAscii.txt";
 const std::string BINARY_FILE = "Exported_Files/xTestBinary.bin";
-const std::string IN_FBX_FILEPATH = "FBX_Files/twoConnorCubes.fbx";
+const std::string IN_FBX_FILEPATH = "FBX_Files/boxLight.fbx";
 
 // MM: Standard names, in case you mess them up too much
 //const std::string ASCII_FILE = "Exported_Files/xTestAscii.txt";
